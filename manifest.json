@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Lovable AI Timer",
+  "name": " Timer - extension",
   "version": "1.0",
   "description": "A beautiful timer with customizable sound alerts",
   "permissions": ["storage"],
