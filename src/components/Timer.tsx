@@ -70,33 +70,43 @@ export default function Timer() {
     elementStart.current = { x: position.x, y: position.y };
     
     document.body.style.cursor = 'grabbing';
-    const captureElement = e.currentTarget as HTMLElement;
-    captureElement.setPointerCapture(e.pointerId);
-  };
-
-  const handlePointerMove = (e: React.PointerEvent) => {
-    if (!isDraggingRef.current) return;
-    const dx = e.clientX - dragStart.current.x;
-    const dy = e.clientY - dragStart.current.y;
-    const newX = elementStart.current.x + dx;
-    const newY = elementStart.current.y + dy;
-    
-    positionRef.current = { x: newX, y: newY };
     if (containerRef.current) {
-      containerRef.current.style.transform = `translate(${newX}px, ${newY}px)`;
+      containerRef.current.style.transition = 'none';
     }
   };
 
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (!isDraggingRef.current) return;
-    isDraggingRef.current = false;
-    document.body.style.cursor = '';
-    try {
-      const captureElement = e.currentTarget as HTMLElement;
-      captureElement.releasePointerCapture(e.pointerId);
-    } catch (err) {}
-    setPosition(positionRef.current);
-  };
+  useEffect(() => {
+    const handlePointerMoveGlobal = (e: PointerEvent) => {
+      if (!isDraggingRef.current) return;
+      const dx = e.clientX - dragStart.current.x;
+      const dy = e.clientY - dragStart.current.y;
+      const newX = elementStart.current.x + dx;
+      const newY = elementStart.current.y + dy;
+      
+      positionRef.current = { x: newX, y: newY };
+      if (containerRef.current) {
+        containerRef.current.style.transform = `translate(${newX}px, ${newY}px)`;
+      }
+    };
+
+    const handlePointerUpGlobal = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      document.body.style.cursor = '';
+      if (containerRef.current) {
+        containerRef.current.style.transition = '';
+      }
+      setPosition(positionRef.current);
+    };
+
+    window.addEventListener('pointermove', handlePointerMoveGlobal);
+    window.addEventListener('pointerup', handlePointerUpGlobal);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMoveGlobal);
+      window.removeEventListener('pointerup', handlePointerUpGlobal);
+    };
+  }, []);
 
   const timerRef = useRef<number>();
 
@@ -326,8 +336,6 @@ export default function Timer() {
         {/* Left Side: Draggable Handle & Time */}
         <div
           onPointerDown={handlePointerDown}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
           className="flex items-center gap-1.5 cursor-grab active:cursor-grabbing z-10 flex-1 py-1"
           title="Drag to move"
         >
@@ -373,8 +381,6 @@ export default function Timer() {
     <div
       ref={containerRef}
       onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
       style={{
         transform: `translate(${position.x}px, ${position.y}px)`,
         cursor: 'grab'
