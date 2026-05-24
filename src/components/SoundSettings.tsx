@@ -88,47 +88,49 @@ export default function SoundSettings({ settings, onChange }: SoundSettingsProps
           {/* Tick Sound Type */}
           <div className="space-y-1">
             <span className="text-[10px] font-medium text-gray-400 block">Tick Sound</span>
-            {settings.soundType !== 'custom' ? (
-              <select
-                value={settings.soundType}
-                onChange={(e) => onChange({ ...settings, soundType: e.target.value })}
-                className="w-full bg-black/40 border border-white/5 text-gray-200 rounded-xl text-xs py-1.5 px-2.5 outline-none focus:border-indigo-500/50 transition-colors"
-              >
-                <option value="paper">Paper Fold</option>
-                <option value="mechanical">Mechanical Click</option>
-                <option value="clock">Clock Tick</option>
-                <option value="digital">Digital Beep</option>
-                <option value="custom">Custom MP3...</option>
-              </select>
-            ) : (
-              <AudioUpload
-                onAudioSelect={handleTickAudioSelect}
-                onRemove={removeTickAudio}
-                currentFile={settings.customTickSound}
-              />
+            <select
+              value={settings.soundType}
+              onChange={(e) => onChange({ ...settings, soundType: e.target.value })}
+              className="w-full bg-black/40 border border-white/5 text-gray-200 rounded-xl text-xs py-1.5 px-2.5 outline-none focus:border-indigo-500/50 transition-colors"
+            >
+              <option value="paper">Paper Fold</option>
+              <option value="mechanical">Mechanical Click</option>
+              <option value="clock">Clock Tick</option>
+              <option value="digital">Digital Beep</option>
+              <option value="custom">Custom MP3...</option>
+            </select>
+            {settings.soundType === 'custom' && (
+              <div className="mt-1.5">
+                <AudioUpload
+                  onAudioSelect={handleTickAudioSelect}
+                  onRemove={removeTickAudio}
+                  currentFile={settings.customTickSound}
+                />
+              </div>
             )}
           </div>
 
           {/* End Sound Type */}
           <div className="space-y-1">
             <span className="text-[10px] font-medium text-gray-400 block">Alarm Sound</span>
-            {settings.endSoundType !== 'custom' ? (
-              <select
-                value={settings.endSoundType}
-                onChange={(e) => onChange({ ...settings, endSoundType: e.target.value })}
-                className="w-full bg-black/40 border border-white/5 text-gray-200 rounded-xl text-xs py-1.5 px-2.5 outline-none focus:border-indigo-500/50 transition-colors"
-              >
-                <option value="trumpet">Trumpet Fanfare</option>
-                <option value="bell">Metallic Bell</option>
-                <option value="chime">Wind Chime</option>
-                <option value="custom">Custom MP3...</option>
-              </select>
-            ) : (
-              <AudioUpload
-                onAudioSelect={handleEndAudioSelect}
-                onRemove={removeEndAudio}
-                currentFile={settings.customEndSound}
-              />
+            <select
+              value={settings.endSoundType}
+              onChange={(e) => onChange({ ...settings, endSoundType: e.target.value })}
+              className="w-full bg-black/40 border border-white/5 text-gray-200 rounded-xl text-xs py-1.5 px-2.5 outline-none focus:border-indigo-500/50 transition-colors"
+            >
+              <option value="trumpet">Trumpet Fanfare</option>
+              <option value="bell">Metallic Bell</option>
+              <option value="chime">Wind Chime</option>
+              <option value="custom">Custom MP3...</option>
+            </select>
+            {settings.endSoundType === 'custom' && (
+              <div className="mt-1.5">
+                <AudioUpload
+                  onAudioSelect={handleEndAudioSelect}
+                  onRemove={removeEndAudio}
+                  currentFile={settings.customEndSound}
+                />
+              </div>
             )}
           </div>
         </div>
