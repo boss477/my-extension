@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, Volume2 } from 'lucide-react';
+import { Settings, Volume2, Minimize2 } from 'lucide-react';
 
 interface TimerDisplayProps {
   time: number;
@@ -8,6 +8,8 @@ interface TimerDisplayProps {
   showSoundSettings: boolean;
   onSettingsToggle: () => void;
   onSoundSettingsToggle: () => void;
+  isMinimized?: boolean;
+  onMinimizeToggle?: () => void;
 }
 
 export default function TimerDisplay({
@@ -16,7 +18,9 @@ export default function TimerDisplay({
   showSettings,
   showSoundSettings,
   onSettingsToggle,
-  onSoundSettingsToggle
+  onSoundSettingsToggle,
+  isMinimized = false,
+  onMinimizeToggle
 }: TimerDisplayProps) {
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -34,7 +38,7 @@ export default function TimerDisplay({
       {/* Top Header Controls */}
       <div className="w-full flex items-center justify-between px-1 z-10">
         <span className="text-[11px] font-bold uppercase tracking-widest text-gray-400">Timer</span>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             onClick={onSoundSettingsToggle}
             className={`p-1.5 rounded-lg border transition-all duration-200 ${
@@ -57,11 +61,22 @@ export default function TimerDisplay({
           >
             <Settings className="w-3.5 h-3.5" />
           </button>
+
+          {/* Sizing Controls */}
+          {onMinimizeToggle && (
+            <button
+              onClick={onMinimizeToggle}
+              className="p-1.5 rounded-lg bg-white/5 border border-white/5 text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+              title="Minimize to 3:2"
+            >
+              <Minimize2 className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </div>
 
       {/* Circular Progress Display */}
-      <div className="relative w-36 h-36 flex items-center justify-center select-none my-1 z-10">
+      <div className="relative w-36 h-36 my-1 flex items-center justify-center select-none z-10">
         <svg className="w-full h-full transform -rotate-90" viewBox="0 0 148 148">
           {/* Background circle track */}
           <circle
@@ -99,7 +114,7 @@ export default function TimerDisplay({
           >
             {formatTime(time)}
           </span>
-          <span className="text-[9px] text-gray-500 font-semibold tracking-widest uppercase mt-0.5">
+          <span className="text-[9px] tracking-widest mt-0.5 text-gray-500 font-semibold uppercase">
             {time === 0 ? 'Done' : 'Remaining'}
           </span>
         </div>

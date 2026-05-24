@@ -103,7 +103,7 @@ export default function SoundSettings({ settings, onChange }: SoundSettingsProps
               <AudioUpload
                 onAudioSelect={handleTickAudioSelect}
                 onRemove={removeTickAudio}
-                currentFileName={settings.customTickSound?.name}
+                currentFile={settings.customTickSound}
               />
             )}
           </div>
@@ -126,7 +126,7 @@ export default function SoundSettings({ settings, onChange }: SoundSettingsProps
               <AudioUpload
                 onAudioSelect={handleEndAudioSelect}
                 onRemove={removeEndAudio}
-                currentFileName={settings.customEndSound?.name}
+                currentFile={settings.customEndSound}
               />
             )}
           </div>

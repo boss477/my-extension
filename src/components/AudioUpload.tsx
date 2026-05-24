@@ -4,16 +4,19 @@ import { Play, Upload, X } from 'lucide-react';
 interface AudioUploadProps {
   onAudioSelect: (audioFile: File) => void;
   onRemove: () => void;
-  currentFileName?: string;
+  currentFile?: File;
 }
 
-export default function AudioUpload({ onAudioSelect, onRemove, currentFileName }: AudioUploadProps) {
+export default function AudioUpload({ onAudioSelect, onRemove, currentFile }: AudioUploadProps) {
   const [previewAudio, setPreviewAudio] = useState<HTMLAudioElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      if (previewAudio) {
+        URL.revokeObjectURL(previewAudio.src);
+      }
       onAudioSelect(file);
       setPreviewAudio(new Audio(URL.createObjectURL(file)));
     }
@@ -21,9 +24,16 @@ export default function AudioUpload({ onAudioSelect, onRemove, currentFileName }
 
   const handlePreview = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (previewAudio) {
-      previewAudio.currentTime = 0;
-      previewAudio.play().catch(() => {});
+    let audioToPlay = previewAudio;
+    if (!audioToPlay && currentFile) {
+      audioToPlay = new Audio(URL.createObjectURL(currentFile));
+      setPreviewAudio(audioToPlay);
+    }
+    if (audioToPlay) {
+      audioToPlay.currentTime = 0;
+      audioToPlay.play().catch((err) => {
+        console.warn('Playback failed:', err);
+      });
     }
   };
 
@@ -56,10 +66,10 @@ export default function AudioUpload({ onAudioSelect, onRemove, currentFileName }
         >
           <Upload className="w-3.5 h-3.5 flex-shrink-0" />
           <span className="truncate max-w-[120px]">
-            {currentFileName || 'Upload Audio'}
+            {currentFile?.name || 'Upload Audio'}
           </span>
         </button>
-        {currentFileName && (
+        {currentFile && (
           <div className="flex gap-1">
             <button
               type="button"

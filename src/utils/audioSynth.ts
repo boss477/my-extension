@@ -5,9 +5,38 @@ function getAudioContext(): AudioContext {
     audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
   }
   if (audioCtx.state === 'suspended') {
-    audioCtx.resume();
+    audioCtx.resume().catch((err) => {
+      console.warn('AudioContext resume was blocked or failed:', err);
+    });
   }
   return audioCtx;
+}
+
+let customTickBuffer: AudioBuffer | null = null;
+let customEndBuffer: AudioBuffer | null = null;
+
+export async function setCustomSoundBuffer(type: 'tick' | 'end', file: File | Blob) {
+  try {
+    const ctx = getAudioContext();
+    const arrayBuffer = await file.arrayBuffer();
+    // Use callback-less decodeAudioData promise API
+    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+    if (type === 'tick') {
+      customTickBuffer = audioBuffer;
+    } else {
+      customEndBuffer = audioBuffer;
+    }
+  } catch (error) {
+    console.error(`Failed to decode custom ${type} sound:`, error);
+  }
+}
+
+export function clearCustomSoundBuffer(type: 'tick' | 'end') {
+  if (type === 'tick') {
+    customTickBuffer = null;
+  } else {
+    customEndBuffer = null;
+  }
 }
 
 export function playSynthesizedSound(type: string, volume: number) {
@@ -19,6 +48,32 @@ export function playSynthesizedSound(type: string, volume: number) {
     const masterGain = ctx.createGain();
     masterGain.gain.setValueAtTime(volume, now);
     masterGain.connect(ctx.destination);
+
+    if (type === 'custom-tick') {
+      if (customTickBuffer) {
+        const source = ctx.createBufferSource();
+        source.buffer = customTickBuffer;
+        source.connect(masterGain);
+        source.start(now);
+      } else {
+        // Fallback
+        playSynthesizedSound('paper', volume);
+      }
+      return;
+    }
+
+    if (type === 'custom-end') {
+      if (customEndBuffer) {
+        const source = ctx.createBufferSource();
+        source.buffer = customEndBuffer;
+        source.connect(masterGain);
+        source.start(now);
+      } else {
+        // Fallback
+        playSynthesizedSound('trumpet', volume);
+      }
+      return;
+    }
 
     if (type === 'paper' || type === 'mechanical') {
       // Paper flip/Mechanical click: synthesized using a quick noise burst
