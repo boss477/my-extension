@@ -94,7 +94,8 @@ export default function SoundSettings({ settings, onChange }: SoundSettingsProps
                 onChange={(e) => onChange({ ...settings, soundType: e.target.value })}
                 className="w-full bg-black/40 border border-white/5 text-gray-200 rounded-xl text-xs py-1.5 px-2.5 outline-none focus:border-indigo-500/50 transition-colors"
               >
-                <option value="paper">Mechanical Click</option>
+                <option value="paper">Paper Fold</option>
+                <option value="mechanical">Mechanical Click</option>
                 <option value="clock">Clock Tick</option>
                 <option value="digital">Digital Beep</option>
                 <option value="custom">Custom MP3...</option>

@@ -75,9 +75,9 @@ export function playSynthesizedSound(type: string, volume: number) {
       return;
     }
 
-    if (type === 'paper' || type === 'mechanical') {
-      // Paper flip/Mechanical click: synthesized using a quick noise burst
-      const bufferSize = ctx.sampleRate * 0.02; // 20ms
+    if (type === 'mechanical') {
+      // Sharp mechanical click: quick highpass noise burst
+      const bufferSize = ctx.sampleRate * 0.015; // 15ms
       const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
       const data = buffer.getChannelData(0);
       for (let i = 0; i < bufferSize; i++) {
@@ -88,17 +88,50 @@ export function playSynthesizedSound(type: string, volume: number) {
 
       const filter = ctx.createBiquadFilter();
       filter.type = 'highpass';
-      filter.frequency.setValueAtTime(1500, now);
+      filter.frequency.setValueAtTime(2000, now);
 
       const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0.3, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.015);
+      gain.gain.setValueAtTime(0.25, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.012);
 
       noise.connect(filter);
       filter.connect(gain);
       gain.connect(masterGain);
       noise.start(now);
-      noise.stop(now + 0.02);
+      noise.stop(now + 0.015);
+
+    } else if (type === 'paper') {
+      // Paper fold: longer, textured noise with amplitude fluctuations (crumple/fold resonance)
+      const duration = 0.12; // 120ms
+      const bufferSize = ctx.sampleRate * duration;
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      
+      for (let i = 0; i < bufferSize; i++) {
+        const t = i / ctx.sampleRate;
+        const noiseVal = Math.random() * 2 - 1;
+        // Amplitude modulation for crackly paper friction
+        const flutter = 0.75 + 0.25 * Math.sin(t * 180) * Math.sin(t * 40);
+        data[i] = noiseVal * flutter;
+      }
+      
+      const noise = ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1100, now);
+      filter.Q.setValueAtTime(1.8, now);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(masterGain);
+      noise.start(now);
+      noise.stop(now + duration);
 
     } else if (type === 'clock') {
       // Classic woodblock clock tick: sine sweep from 1000Hz to 100Hz
