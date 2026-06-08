@@ -40,40 +40,59 @@ export function clearCustomSoundBuffer(type: 'tick' | 'end') {
 }
 
 export function playSynthesizedSound(type: string, volume: number) {
-  try {
-    const ctx = getAudioContext();
-    const now = ctx.currentTime;
-    
-    // Create master gain node for volume control
-    const masterGain = ctx.createGain();
-    masterGain.gain.setValueAtTime(volume, now);
-    masterGain.connect(ctx.destination);
-
-    if (type === 'custom-tick') {
-      if (customTickBuffer) {
+  // Handle custom buffer types before creating the master gain node so that
+  // the fallback path doesn't leave an orphaned gain node connected to the
+  // audio graph destination.
+  if (type === 'custom-tick') {
+    if (customTickBuffer) {
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(volume, now);
+        masterGain.connect(ctx.destination);
         const source = ctx.createBufferSource();
         source.buffer = customTickBuffer;
         source.connect(masterGain);
         source.start(now);
-      } else {
-        // Fallback
-        playSynthesizedSound('paper', volume);
+      } catch (error) {
+        console.error('Audio synthesis failed:', error);
       }
-      return;
+    } else {
+      playSynthesizedSound('paper', volume);
     }
+    return;
+  }
 
-    if (type === 'custom-end') {
-      if (customEndBuffer) {
+  if (type === 'custom-end') {
+    if (customEndBuffer) {
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const masterGain = ctx.createGain();
+        masterGain.gain.setValueAtTime(volume, now);
+        masterGain.connect(ctx.destination);
         const source = ctx.createBufferSource();
         source.buffer = customEndBuffer;
         source.connect(masterGain);
         source.start(now);
-      } else {
-        // Fallback
-        playSynthesizedSound('trumpet', volume);
+      } catch (error) {
+        console.error('Audio synthesis failed:', error);
       }
-      return;
+    } else {
+      playSynthesizedSound('trumpet', volume);
     }
+    return;
+  }
+
+  try {
+    const ctx = getAudioContext();
+    const now = ctx.currentTime;
+
+    // Create master gain node for volume control
+    const masterGain = ctx.createGain();
+    masterGain.gain.setValueAtTime(volume, now);
+    masterGain.connect(ctx.destination);
 
     if (type === 'mechanical') {
       // Sharp mechanical click: quick highpass noise burst

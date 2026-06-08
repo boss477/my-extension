@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Play, Upload, X } from 'lucide-react';
 
 interface AudioUploadProps {
@@ -36,6 +36,15 @@ export default function AudioUpload({ onAudioSelect, onRemove, currentFile }: Au
       });
     }
   };
+
+  // Revoke the object URL whenever previewAudio is replaced or the component unmounts
+  useEffect(() => {
+    return () => {
+      if (previewAudio) {
+        URL.revokeObjectURL(previewAudio.src);
+      }
+    };
+  }, [previewAudio]);
 
   const handleRemove = (e: React.MouseEvent) => {
     e.stopPropagation();

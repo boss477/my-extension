@@ -60,6 +60,11 @@ export default function Timer() {
   const [isMinimized, setIsMinimized] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // Track which File is currently persisted in DB so the sync effects can skip
+  // the redundant write-back that would otherwise fire when isLoaded first turns true.
+  const prevTickSoundRef = useRef<File | undefined>(undefined);
+  const prevEndSoundRef = useRef<File | undefined>(undefined);
+
   const handlePointerDown = (e: React.PointerEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('button, input, select, option, label, [role="slider"]')) {
@@ -67,7 +72,7 @@ export default function Timer() {
     }
     isDraggingRef.current = true;
     dragStart.current = { x: e.clientX, y: e.clientY };
-    elementStart.current = { x: position.x, y: position.y };
+    elementStart.current = { x: positionRef.current.x, y: positionRef.current.y };
     
     document.body.style.cursor = 'grabbing';
     if (containerRef.current) {
@@ -101,10 +106,12 @@ export default function Timer() {
 
     window.addEventListener('pointermove', handlePointerMoveGlobal);
     window.addEventListener('pointerup', handlePointerUpGlobal);
+    window.addEventListener('pointercancel', handlePointerUpGlobal);
 
     return () => {
       window.removeEventListener('pointermove', handlePointerMoveGlobal);
       window.removeEventListener('pointerup', handlePointerUpGlobal);
+      window.removeEventListener('pointercancel', handlePointerUpGlobal);
     };
   }, []);
 
@@ -160,6 +167,17 @@ export default function Timer() {
         console.warn('IndexedDB read not available:', err);
       }
 
+      // Decode audio buffers immediately so they are ready before the first tick.
+      // This also initialises prevRef so the sync effects skip the redundant write-back.
+      if (customTickSound) {
+        prevTickSoundRef.current = customTickSound;
+        setCustomSoundBuffer('tick', customTickSound).catch(() => {});
+      }
+      if (customEndSound) {
+        prevEndSoundRef.current = customEndSound;
+        setCustomSoundBuffer('end', customEndSound).catch(() => {});
+      }
+
       if (saved) {
         try {
           const parsed = JSON.parse(saved) as SavedState;
@@ -170,7 +188,7 @@ export default function Timer() {
             customEndSound: customEndSound || undefined
           }));
           setInitialTime(parsed.initialTime || 360);
-          
+
           if (parsed.isRunning) {
             const remaining = Math.max(0, Math.floor((parsed.endTime - Date.now()) / 1000));
             if (remaining > 0) {
@@ -191,7 +209,7 @@ export default function Timer() {
           console.error('Error parsing saved state:', e);
         }
       } else if (customTickSound || customEndSound) {
-        // If there is no saved general state but custom sounds exist in DB, still set them
+        // No saved general state but custom sounds exist in DB — still set them
         setSoundSettings((prev) => ({
           ...prev,
           customTickSound: customTickSound || undefined,
@@ -235,12 +253,17 @@ export default function Timer() {
     saveState();
   }, [time, initialTime, isRunning, isPaused, soundSettings, isLoaded]);
 
-  // Synchronize custom sound files with IndexedDB and Audio Context buffers
+  // Synchronize custom sound files with IndexedDB and Audio Context buffers.
+  // prevRef guards against a redundant write-back on first load (the file was
+  // just read FROM the DB; no need to immediately write it back).
   useEffect(() => {
     if (!isLoaded) return;
-    if (soundSettings.customTickSound) {
-      saveSound('customTickSound', soundSettings.customTickSound)
-        .then(() => setCustomSoundBuffer('tick', soundSettings.customTickSound!))
+    const file = soundSettings.customTickSound;
+    if (file === prevTickSoundRef.current) return;
+    prevTickSoundRef.current = file;
+    if (file) {
+      saveSound('customTickSound', file)
+        .then(() => setCustomSoundBuffer('tick', file))
         .catch(err => console.error('Error saving custom tick sound:', err));
     } else {
       deleteSound('customTickSound')
@@ -251,9 +274,12 @@ export default function Timer() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    if (soundSettings.customEndSound) {
-      saveSound('customEndSound', soundSettings.customEndSound)
-        .then(() => setCustomSoundBuffer('end', soundSettings.customEndSound!))
+    const file = soundSettings.customEndSound;
+    if (file === prevEndSoundRef.current) return;
+    prevEndSoundRef.current = file;
+    if (file) {
+      saveSound('customEndSound', file)
+        .then(() => setCustomSoundBuffer('end', file))
         .catch(err => console.error('Error saving custom end sound:', err));
     } else {
       deleteSound('customEndSound')
